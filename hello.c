@@ -56,7 +56,7 @@ void destroy_node(struct Node *de_node,  struct Node *first_node) {
   }
   
   while (next) {
-    if (next == de_node) {
+    if (next -> nextNode == de_node) {
       next -> nextNode = de_node -> nextNode;
       free(de_node);
       return;
