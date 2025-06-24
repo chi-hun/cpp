@@ -2,46 +2,58 @@
 #include <iostream>
 #include <string.h>
 
-struct Animal {
-    char name[20];
-    int age;
-    int health;
-    int hungry;
+class Ball {
+    private:
+        int x;
+        int y;
+    public:
+        Ball (int _x, int _y) {
+            x = _x;
+            y = _y;
+        }
+
+        void print();
+        void move(int _x, int _y);
+        int s_x();
+        int s_y();
+        int distance(Ball ball_d);
 };
 
-void new_animal(Animal* ani);
-    
-int main(void) {
-    int n_animal;
-    std::cout << "동물의 수량 : ";
-    std::cin >> n_animal;
-    Animal* animals = new Animal[n_animal];
-
-    char name[20];
-    int age;
-    int health;
-    int hungry;
-
-    new_animal(&animals[0]);
-
-    std::cout << "name : " <<animals[0].name << std::endl;
-    std::cout << "age : " <<animals[0].age << std::endl;
-    std::cout << "health : " <<animals[0].health << std::endl;
-    std::cout << "hungry : " <<animals[0].hungry << std::endl;
-
-    delete[] animals;
-
-    return 0;
+void Ball::print() {
+    std::cout << "x : " << x << ", " << "y : " << y << std::endl;
 }
 
-void new_animal(Animal* ani) {
+void Ball::move(int _x, int _y) {
+    x += _x;
+    y += _y;
+}
+
+int Ball::s_x() {
+    return x;
+}
+
+int Ball::s_y() {
+    return y;
+}
+
+int Ball::distance(Ball ball_d) {
+    int x_d = ball_d.s_x();
+    int y_d = ball_d.s_y();
     
-    std::cout << "이름 : ";
-    std::cin >> ani -> name;
-    std::cout << "나이 : ";
-    std::cin >> ani -> age;
-    std::cout << "체력 : ";
-    std::cin >> ani -> health;
-    std::cout << "배부름 : ";
-    std::cin >> ani -> hungry;
+    return ((x - x_d) * (x - x_d) + (y - y_d) * (y - y_d));
+}   
+    
+int main(void) {
+    Ball ball_1(1,2);
+    ball_1.print();
+
+    Ball ball_2(3,4);
+    ball_2.print();
+    ball_2.move(1,1);
+    ball_2.print();
+
+    int dd = ball_1.distance(ball_2);
+    std::cout << dd << std::endl;
+
+    return 0;
 }
