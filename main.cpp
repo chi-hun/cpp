@@ -1,6 +1,7 @@
 // 1-3
 #include <iostream>
 #include <string.h>
+#include <cmath>
 
 class Ball {
     private:
@@ -16,7 +17,7 @@ class Ball {
         void move(int _x, int _y);
         int s_x();
         int s_y();
-        int distance(Ball ball_d);
+        float distance(Ball ball_d);
 };
 
 void Ball::print() {
@@ -36,11 +37,11 @@ int Ball::s_y() {
     return y;
 }
 
-int Ball::distance(Ball ball_d) {
+float Ball::distance(Ball ball_d) {
     int x_d = ball_d.s_x();
     int y_d = ball_d.s_y();
     
-    return ((x - x_d) * (x - x_d) + (y - y_d) * (y - y_d));
+    return std::sqrt((x - x_d) * (x - x_d) + (y - y_d) * (y - y_d));
 }   
     
 int main(void) {
