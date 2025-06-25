@@ -2,136 +2,72 @@
 #include <iostream>
 #include <string.h>
 
-class Mystring {
-    char* str_p;
-    int str_l;
-    int str_c;
+class Complex {
+    int a;
+    int b;
 
     public:
-    Mystring(char c);
-    Mystring(const char *c);
-    Mystring(const Mystring& c);
-    ~Mystring();
-    Mystring& assign(const Mystring& c);
-    Mystring& assign(const char *c);
-    Mystring& operator=(const Mystring& c);
-    Mystring operator+(const Mystring& c);
-    int length() const;
-    int cap() const;
-    void re_cap(int size);
-    void print();
+        Complex(int a, int b) : a(a), b(b) {};
+        ~Complex() {};
+        void print(void);
+        Complex operator+(Complex c);
+        Complex operator-(Complex c);
+        Complex operator*(Complex c);
+        Complex operator/(Complex c);
+        
 };
 
-Mystring::Mystring(char c) {
-    str_p = new char[1];
-    str_p[0] = c;
-    str_l = 1;
-    str_c = 1;
+void Complex::print(void) {
+    std::cout << a << " + " << b << "i" << std::endl;
 }
 
-Mystring::Mystring(const char *c) {
-    str_l = strlen(c);
-    str_c = str_l+1;
-    str_p = new char[str_l+1];
-    strcpy(str_p, c);
+Complex Complex::operator+(Complex c) {
+    std::cout << "add" << std::endl;
+    int _a = a + c.a;
+    int _b = b + c.b;
+    return Complex(_a, _b);
 }
 
-Mystring::Mystring(const Mystring& c) {
-    str_l = strlen(c.str_p);
-    str_c = str_l+1;
-    str_p = new char[str_l+1];
-    strcpy(str_p, c.str_p);
+Complex Complex::operator-(Complex c) {
+    std::cout << "sub" << std::endl;
+    int _a = a - c.a;
+    int _b = b - c.b;
+    return Complex(_a, _b);
 }
 
-Mystring::~Mystring() {
-    delete[] str_p;
+Complex Complex::operator*(Complex c) {
+    std::cout << "mul" << std::endl;
+    int _a = (a * c.a) - (b * c.b);
+    int _b = (a * c.b) + (b * c.a);
+    return Complex(_a, _b);
 }
 
-Mystring& Mystring::assign(const Mystring& c) {
-    if (str_l < c.str_l) {
-        delete[] str_p;
-        str_p = new char[c.str_l+1];
-        str_c = c.str_l+1;
-    }
-    strcpy(str_p, c.str_p);
-    str_l = c.str_l;
-    return *this;
-}
+Complex Complex::operator/(Complex c) {
+    std::cout << "div" << std::endl;
+    int _d = c.a*c.a + c.b*c.b;
 
-Mystring& Mystring::assign(const char *c) {
-    int c_l = strlen(c);
-    if (str_l < c_l) {
-        delete[] str_p;
-        str_p = new char[c_l+1];
-    }
-    strcpy(str_p, c);
-    str_l = c_l;
-    return *this;
-}
-Mystring& Mystring::operator=(const Mystring& c) {
-    if (str_l < c.str_l) {
-        delete[] str_p;
-        str_p = new char[c.str_l+1];
-    }
-    strcpy(str_p, c.str_p);
-    str_l = c.str_l;
-    return *this;
-}
-
-Mystring Mystring::operator+(const Mystring& c) {
-    Mystring tmp('e');
-    tmp.str_l = str_l + c.str_l;
-    tmp.str_c = tmp.str_l + 1;
-    tmp.str_p = new char[tmp.str_c];
-    strcpy(tmp.str_p, str_p);
-    strcat(tmp.str_p, c.str_p);
-    return tmp;
-}
-
-int Mystring::length() const {
-    return str_l;
-}
-
-int Mystring::cap() const {
-    return str_c;
-}
-
-void Mystring::re_cap(int size) {
-    if (str_c < size) {
-        char* tmp = str_p;
-        str_p = new char[size];
-        strcpy(str_p, tmp);
-        str_c = size;
-        delete[] tmp;
-    }
-}
-
-
-void Mystring::print() {
-    std::cout << str_p << std::endl;
+    int _a = ((a * c.a) + (b * c.b)) / _d;
+    int _b = ((b * c.a) - (a * c.b)) / _d;
+    return Complex(_a, _b);
 }
 
 int main(void) {
-    Mystring cc("ddd");
-    cc.print();
-    Mystring dd(cc);
-    dd.print();
-    std::cout << dd.length() << std::endl;
+    Complex c_1(1,2);
+    Complex c_2(3,4);
+    c_1.print();
+    c_2.print();
 
-    dd.assign("abc");
-    dd.print();
-    std::cout << dd.length() << std::endl;
+    Complex c_3 = c_1 + c_2;
+    c_3.print();
 
-    dd = cc;
-    dd.print();
-    std::cout << dd.length() << std::endl;
-    std::cout << dd.cap() << std::endl;
+    c_3 = c_1 - c_2;
+    c_3.print();
 
-    dd.re_cap(100);
-    std::cout << dd.cap() << std::endl;
+    c_3 = c_1 * c_2;
+    c_3.print();
 
-    Mystring aa = cc + dd;
-    aa.print();
+    c_3 = c_1 / c_2;
+    c_3.print();
 
     return 0;
 }
