@@ -1,20 +1,21 @@
-// 7-1
+// 7-2
 
 #include <iostream>
 #include <string>
+#include <fstream>
 
 int main(void) {
-    int i;
-    while(true) {
-        std::cout << "입력" << std::endl;
-        std::cin >> i;
-        std::cout << i << std::endl;
-        if (std::cin.fail()) {
-            std::cout << "입력 똑바로" << std::endl;
-            std::cin.clear();
-            std::cin.ignore(100, '\n');
-        }
-        if (i==1){break;}
+
+    std::ifstream in("test.txt", std::ios::binary);
+    std::string s;
+    int x;
+
+    if (in.is_open()) {
+        while (in >> s) {
+            in.read((char*)(&x), 4);
+            std::cout << std::hex<< x << std::endl;}
+    } else {
+        std::cout << "error" << std::endl;
     }
     return 0;
 }
