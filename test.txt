@@ -1,1 +1,1 @@
-hello world hai iii ha ha
+name :: 이d름 age :: 13

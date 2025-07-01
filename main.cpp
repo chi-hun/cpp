@@ -1,23 +1,47 @@
-// 7-2
+// 8-1
 
 #include <iostream>
 #include <string>
-#include <fstream>
 
-int main(void) {
+class Vector {
+    private: 
+        std::string* data;
+        int capacity;
+        int length;
+    
+    public:
+        Vector(int c=1) : data(new std::string[c]), capacity(c), length(0){};
+        ~Vector() {delete[] data;};
+        std::string operator[](int i){return data[i];};
+        void push_back(std::string s);
+        void remove(int x);
+};
 
-    std::ifstream in("test.txt", std::ios::binary);
-    std::string s;
-    int x;
-
-    if (in.is_open()) {
-        while (in >> s) {
-            in.read((char*)(&x), 4);
-            std::cout << std::hex<< x << std::endl;}
-    } else {
-        std::cout << "error" << std::endl;
+void Vector::push_back(std::string s) {
+    if (capacity <= length) {
+        std::string* temp = new std::string[capacity*2];
+        for (int i=0; i < length; i++) {
+            temp[i] = data[i];
+        }
+        delete[] data;
+        data =temp;
+        capacity *= 2;
     }
-    return 0;
+    data[length] = s;
+    length++;
+}
+
+void Vector::remove(int x) {
+    for (int i=x+1; i < length; i++) {
+        data[i-1] = data[i];
+        length--;
+    }
 }
 
 
+int main(void) {
+
+    std::cout << "Dd" << std::endl;
+
+    return 0;
+}
