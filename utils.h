@@ -18,6 +18,7 @@ class Vector {
         void push_back(std::string s);
         void remove(int x);
         void info();
+        int size();
 };
 
 class Stack {
@@ -29,7 +30,7 @@ class Stack {
             Node(Node* prev, std::string s) : prev(prev), s(s){};
         };
 
-        Node* curent;
+        Node* current;
         Node start;
 
     public:
@@ -40,5 +41,29 @@ class Stack {
         std::string peek();
         bool is_empty();
 };
+
+class NumStack {
+    private:
+        struct Node {
+            Node* prev;
+            double s;
+
+            Node(Node* prev, double s) : prev(prev), s(s) {}
+        };
+
+        Node* current;
+        Node start;
+
+    public:
+        NumStack();
+        ~NumStack();
+        void push(double s);
+        double pop();
+        double peek();
+        bool is_empty();
+
+};
+
+
 }
 #endif

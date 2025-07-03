@@ -1,7 +1,10 @@
 // 8-1
 
 #include <iostream>
+#include <fstream>
 #include <string>
+#include <ctime>
+#include <locale>
 #include "utils.h"
 
 class Cell;
@@ -12,23 +15,85 @@ class Cell {
         int x;
         int y;
         Table* table;
-        std::string data;
     
     public:
-        Cell(std::string data, int x, int y, Table* table);
-        virtual std::string stringify();
-        virtual int to_numeric();
+        Cell(int x, int y, Table* table);
+        virtual std::string stringify() = 0;
+        virtual int to_numeric() = 0;
 };
 
-Cell::Cell(std::string data, int x, int y, Table* table) : data(data), x(x), y(y), table(table) {}
+Cell::Cell(int x, int y, Table* table) : x(x), y(y), table(table) {}
 
-std::string Cell::stringify() {
-    return data;
-}
+// std::string Cell::stringify() {
+//     return data;
+// }
 
-int Cell::to_numeric() {
-    return 0;
+// int Cell::to_numeric() {
+//     return 0;
+// }
+
+class StringCell : public Cell {
+    private:
+        std::string data;
+
+    public:
+        StringCell(std::string data, int x, int y, Table* table) ;
+        std::string stringify();
+        int to_numeric();
+};
+
+StringCell::StringCell(std::string data, int x, int y, Table* table) : Cell(x, y, table), data(data) {}
+std::string StringCell::stringify(){return data;}
+int StringCell::to_numeric(){return 0;}
+
+class NumberCell : public Cell {
+    private:
+        int data;
+
+    public:
+        NumberCell(int data, int x, int y, Table* table);
+        std::string stringify();
+        int to_numeric();
+};
+
+NumberCell::NumberCell(int data, int x, int y, Table* table) : Cell(x, y, table), data(data) {}
+std::string NumberCell::stringify(){return std::to_string(data);}
+int NumberCell::to_numeric(){return data;}
+
+class DateCell : public Cell {
+    private:
+        std::time_t data;
+
+    public:
+        DateCell(std::string s, int x, int y, Table* table);
+        std::string stringify();
+        int to_numeric();
+};
+
+DateCell::DateCell(std::string s, int x, int y, Table* table) : Cell(x, y, table) {
+    // s ex)2025-07-03
+    int year = std::atoi(s.c_str());
+    int month = std::atoi(s.c_str() + 5);
+    int day = std::atoi(s.c_str() + 8);
+    std::tm info;
+    info.tm_year = year - 1900;
+    info.tm_mon = month - 1;
+    info.tm_mday = day;
+    info.tm_hour = 0;
+    info.tm_min = 0;
+    info.tm_sec = 0;
+    data = std::mktime(&info);
 }
+std::string DateCell::stringify(){
+    char buf[50];
+    // std::tm temp;
+    // std::localtime(temp, &data);
+    std::tm* temp_ptr = std::localtime(&data);
+    std::strftime(buf, 50, "%F", temp_ptr);
+    return std::string(buf);
+}
+int DateCell::to_numeric(){return static_cast<int>(data);}
+
 
 
 class Table {
@@ -183,6 +248,7 @@ std::string TxtTable::print_table() {
         }
         total_table += "\n";
     }
+    delete[] max_col_width;
     return total_table;
 }
 
@@ -207,12 +273,121 @@ std::string TxtTable::col_num_to_char(int n) {
     return s;
 }
 
+class ExprCell : public Cell {
+    private:
+        std::string data;
+        std::string* parsed_expr;
+        MyExel::Vector exp_vec;
+
+        int precedence(char c);
+        void parse_expression();
+
+    public:
+        ExprCell(std::string data, int x, int y, Table* table);
+        std::string stringify();
+        int to_numeric();
+};
+
+ExprCell::ExprCell(std::string data, int x, int y, Table* table) : Cell(x, y, table), data(data) {
+    parse_expression();
+}
+
+std::string ExprCell::stringify() {return std::to_string(to_numeric());}
+
+int ExprCell::to_numeric(){
+    double result = 0;
+    MyExel::NumStack stack;
+
+    for (int i = 0; i < exp_vec.size(); i++) {
+        std::string s = exp_vec[i];
+        if (std::isalpha(s[0])) {
+            stack.push(table -> to_numeric(s));
+        } else if (std::isdigit(s[0])) {
+            stack.push(std::stoi(s.c_str()));
+        } else {
+            double y = stack.pop();
+            double x = stack.pop();
+            switch (s[0]) {
+                case '+':
+                    stack.push(x + y);
+                    break;
+                case '-':
+                    stack.push(x - y);
+                    break;
+                case '*':
+                    stack.push(x * y);
+                    break;
+                case '/':
+                    stack.push(x / y);
+                    break;
+            }
+        }
+    }
+    return stack.pop();
+}
+
+int ExprCell::precedence(char c) {
+  switch (c) {
+    case '(':
+    case '[':
+    case '{':
+      return 0;
+    case '+':
+    case '-':
+      return 1;
+    case '*':
+    case '/':
+      return 2;
+  }
+  return 0;
+}
+
+void ExprCell::parse_expression() {
+  MyExel::Stack stack;
+
+  // 수식 전체를 () 로 둘러 사서 exp_vec 에 남아있는 연산자들이 push 되게
+  // 해줍니다.
+  data.insert(0, "(");
+  data.push_back(')');
+
+  for (int i = 0; i < data.length(); i++) {
+    if (isalpha(data[i])) {
+      exp_vec.push_back(data.substr(i, 2));
+      i++;
+    } else if (isdigit(data[i])) {
+      exp_vec.push_back(data.substr(i, 1));
+    } else if (data[i] == '(' || data[i] == '[' ||
+               data[i] == '{') {  // Parenthesis
+      stack.push(data.substr(i, 1));
+    } else if (data[i] == ')' || data[i] == ']' || data[i] == '}') {
+      std::string t = stack.pop();
+      while (t != "(" && t != "[" && t != "{") {
+        exp_vec.push_back(t);
+        t = stack.pop();
+      }
+    } else if (data[i] == '+' || data[i] == '-' || data[i] == '*' ||
+               data[i] == '/') {
+      while (!stack.is_empty() &&
+             precedence(stack.peek()[0]) >= precedence(data[i])) {
+        exp_vec.push_back(stack.pop());
+      }
+      stack.push(data.substr(i, 1));
+    }
+  }
+}
+
 int main(void) {
-    TxtTable table(10, 10);
-    table.reg_cell(new Cell("Hello~", 0, 0, &table), 0, 0);
-    table.reg_cell(new Cell("C++", 0, 1, &table), 0, 1);
-    table.reg_cell(new Cell("Programming", 1, 1, &table), 1, 1);
-    table.print_table();
+    TxtTable table(5, 5);
+    table.reg_cell(new NumberCell(2, 1, 1, &table), 1, 1);
+    table.reg_cell(new NumberCell(3, 1, 2, &table), 1, 2);
+    table.reg_cell(new NumberCell(4, 2, 1, &table), 2, 1);
+    table.reg_cell(new NumberCell(5, 2, 2, &table), 2, 2);
+    table.reg_cell(new ExprCell("B2+B3*(C2+C3-2)", 3, 3, &table), 3, 2);
+    table.reg_cell(new StringCell("B2 + B3 * ( C2 + C3 - 2 ) = ", 3, 2, &table),3, 1);
+    // table.print_table();
     std::cout << table;
+    std::ofstream out("test.txt");
+    out << table;
+    out.close();
     return 0;
 }
