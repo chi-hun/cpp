@@ -376,18 +376,97 @@ void ExprCell::parse_expression() {
   }
 }
 
+class Excel {
+    private:
+        Table* table;
+
+    public:
+        Excel(int row, int col);
+        ~Excel();
+        int parse_user_input(std::string s);
+        void command_line();
+};
+
+Excel::Excel(int row, int col) {
+    table = new TxtTable(row, col);
+}
+
+Excel::~Excel() {delete table;}
+
+int Excel::parse_user_input(std::string s) {
+    int next = 0;
+    std::string command = "";
+    for (int i = 0; i < s.length(); i++) {
+        if (s[i] == ' ') {
+            command = s.substr(0, i);
+            next = i + 1;
+            break;
+        } else if (i == s.length() - 1) {
+            command = s.substr(0, i + 1);
+            next = i + 1;
+            break;
+        }
+    }
+
+    std::string to = "";
+    for (int i = next; i < s.length(); i++) {
+        if (s[i] == ' ' || i == s.length() - 1) {
+            to = s.substr(next, i - next);
+            next = i + 1;
+            break;
+        } else if (i == s.length() - 1) {
+            to = s.substr(0, i + 1);
+            next = i + 1;
+            break;
+        }
+    }
+
+    int col = to[0] - 'A';
+    int row = std::stoi(to.c_str() + 1) - 1;
+
+    std::string rset = s.substr(next);
+
+    if (command == "sets") {
+        table -> reg_cell(new StringCell(rset, row, col, table), row, col);
+    } else if (command == "setn") {
+        table -> reg_cell(new NumberCell(std::stoi(rset.c_str()), row, col, table), row, col);
+    } else if (command == "setd") {
+        table -> reg_cell(new DateCell(rset, row, col, table), row, col);
+    } else if (command == "sete") {
+        table -> reg_cell(new ExprCell(rset, row, col, table), row, col);
+    } else if (command == "out") {
+        std::ofstream out(to);
+        out << *table;
+        std::cout << "저장 완료" << std::endl;
+        out.close();
+    } else if (command == "out") {
+        return 0;
+    }
+    return 1;
+}
+
+void Excel::command_line() {
+    std::string s;
+    std::getline(std::cin, s);
+    while (parse_user_input(s)) {
+        std::cout << *table << std::endl;
+        std::getline(std::cin, s);
+    }
+}
+
 int main(void) {
-    TxtTable table(5, 5);
-    table.reg_cell(new NumberCell(2, 1, 1, &table), 1, 1);
-    table.reg_cell(new NumberCell(3, 1, 2, &table), 1, 2);
-    table.reg_cell(new NumberCell(4, 2, 1, &table), 2, 1);
-    table.reg_cell(new NumberCell(5, 2, 2, &table), 2, 2);
-    table.reg_cell(new ExprCell("B2+B3*(C2+C3-2)", 3, 3, &table), 3, 2);
-    table.reg_cell(new StringCell("B2 + B3 * ( C2 + C3 - 2 ) = ", 3, 2, &table),3, 1);
-    // table.print_table();
-    std::cout << table;
-    std::ofstream out("test.txt");
-    out << table;
-    out.close();
+    // TxtTable table(5, 5);
+    // table.reg_cell(new NumberCell(2, 1, 1, &table), 1, 1);
+    // table.reg_cell(new NumberCell(3, 1, 2, &table), 1, 2);
+    // table.reg_cell(new NumberCell(4, 2, 1, &table), 2, 1);
+    // table.reg_cell(new NumberCell(5, 2, 2, &table), 2, 2);
+    // table.reg_cell(new ExprCell("B2+B3*(C2+C3-2)", 3, 3, &table), 3, 2);
+    // table.reg_cell(new StringCell("B2 + B3 * ( C2 + C3 - 2 ) = ", 3, 2, &table),3, 1);
+    // std::cout << table;
+    // std::ofstream out("test.txt");
+    // out << table;
+    // out.close();
+    Excel excel(5, 5);
+    excel.command_line();
     return 0;
 }
