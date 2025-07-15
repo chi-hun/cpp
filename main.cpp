@@ -1,16 +1,19 @@
-// 10-1
+// 10-2
 #include <iostream>
-#include <vector>
+#include <map>
 
 using namespace std;
 
-int main() {
-    vector<int> v = {1,2,3};
-    v.push_back(10);
-    v.push_back(20);
-    for (int i = 0; i < v.size(); i++) {
-        cout << v[i] << endl;
 
+int main() {
+    map<string, int> mm;
+    mm.insert(make_pair("one", 1));
+    mm.insert(pair<string, int>("two", 2));
+    mm.insert(pair<string, int>("three", 3));
+
+    for (auto ar : mm) {
+        cout << ar.first << " " << ar.second << endl;
+    }
 
     return 0;
 }
