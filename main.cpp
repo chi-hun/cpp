@@ -1,42 +1,34 @@
 // 10-3
 #include <iostream>
-#include <vector>
-#include <algorithm>
 
 using namespace std;
 
-// struct is_odd {
-//     bool operator()(const int a){
-//         return (a % 2) == 1;
-//     }
-// };
-
-bool odd(const int a){
-        return (a % 2) == 1;
-}
-
-
 int main() {
-    vector<int> what;
+    ios::sync_with_stdio(0);
+	cin.tie(0); 
 
-    what.push_back(3);
-    what.push_back(2);
-    what.push_back(1);
-    what.push_back(4);
-    what.push_back(5);
+    int n;
+    cin >> n;
+    
+    int y = 0;
+    int m = 0;
 
-    for (auto ar : what) {
-        cout << ar;
+    int t;
+
+    for (int i=1; i <= n; i++) {
+        cin >> t;
+        y += ((t / 30) + 1) * 10;
+        m += ((t / 60) + 1) * 15;
     }
-    cout << endl;
 
-    what.erase(remove_if(what.begin(), what.end(), odd), what.end());
-
-
-    for (auto ar : what) {
-        cout << ar ;
+    if (y > m) {
+        cout << "M " << m << endl;
+    } else if (y < m) {
+        cout << "Y " << y << endl;
+    } else {
+        cout << "Y M " << y << endl;
     }
-    cout << endl;
+        
 
     return 0;
 }
