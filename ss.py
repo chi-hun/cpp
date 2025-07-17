@@ -1,8 +1,14 @@
-n = int(input())
-arr = list(map(int, input().split()))
-serch = int(input())
-re = 0
-for i in range(n):
-    if arr[i] == serch:
-        re += 1
-print(re)
+import sys
+a = list(map(int, sys.stdin.readline().split()))
+b = sorted(a)
+d = b[2]
+while True :
+    ct = 0
+    for i in b:
+        if d % i == 0:
+            ct +=1
+    if ct >= 3:
+        print(d)
+        break
+    else:
+        d += 1
