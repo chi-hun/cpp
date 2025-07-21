@@ -1,14 +1,10 @@
-import sys
-a = list(map(int, sys.stdin.readline().split()))
-b = sorted(a)
-d = b[2]
-while True :
-    ct = 0
-    for i in b:
-        if d % i == 0:
-            ct +=1
-    if ct >= 3:
-        print(d)
-        break
-    else:
-        d += 1
+n = int(input())
+for _ in range(n):
+    a, b = map(int, input().split())
+    a_1 = 1
+    for i in range(a,0,-1):
+        a_1 *= i
+    b_1 = 1
+    for i in range(b,b-a,-1):
+        b_1 *= i
+    print(b_1//a_1)

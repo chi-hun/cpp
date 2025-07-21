@@ -1,34 +1,63 @@
-// 10-3
+// 10-4
 #include <iostream>
-#include <array>
+#include <vector>
 #include <algorithm> 
 
 using namespace std;
 
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(NULL);
-    cout.tie(NULL);
+struct User {
+    string name;
+    int level;
 
-    int a_1, a_2, a_3, a_4, a_5;
-    cin >> a_1 >> a_2 >> a_3 >> a_4 >> a_5;
-    array<int, 5> arr = {a_1, a_2, a_3, a_4, a_5};
-    sort(arr.begin(), arr.end());
-    int d = arr[2];
-    int ct = 0;
-    while (true) {
-        for (int i=0; i < 5; i++) {
-            if (d % arr[i] == 0) {
-                ct++;
+    User(string n, int l) : name(n), level(l) {}
+    bool operator==(const User& u) {
+        if (name == u.name && level == u.level) return true;
+        return false;
+    }
+};
+
+class Party {
+    private:
+        vector<User> users;
+
+    public:
+        bool add_player(string name, int level) {
+            User new_user(name, level);
+            if (find(users.begin(), users.end(), new_user) != users.end()) {
+                return false;
             }
+            users.push_back(new_user);
+            return true;
         }
-        if (ct >= 3) {
-            cout << d;
-            break;
+
+        bool able_dungeon (const int d_level) {
+            return all_of(users.begin(), users.end(), [d_level](User& user) -> bool {
+                return (user.level >= d_level);
+                }
+            );
         }
-        d++;
-        ct = 0;
-    };
-    ct = 0;
+
+        bool use_item(const int i_level) {
+            return any_of(users.begin(), users.end(), [i_level](User& user) -> bool {
+                return (user.level >= i_level);
+                }
+            );
+        }
+};
+
+int main() {
+    Party party;
+    party.add_player("kim", 10);
+    party.add_player("lee", 20);
+    party.add_player("park", 25);
+    party.add_player("choi", 30);
+
+    cout << boolalpha;
+
+    cout << "20level dungeon : " << [&party](){if (party.able_dungeon(20)) return "able"; return "deable"; }() << endl;
+    cout << "10level dungeon : " << party.able_dungeon(10) << endl;
+    cout << "35level item : " << party.use_item(35) << endl;
+    cout << "30level item : " << party.use_item(30) << endl;
+
     return 0;
 }
