@@ -1,51 +1,34 @@
-// 13-2
+// 14
 #include <iostream>
 #include <string>
-#include <utility>
-#include <memory>
-#include <vector>
-
+#include <functional>
 
 using namespace std;
 
-class A {
-    string s;
-    weak_ptr<A> other;
-    public:
-        A(string s) : s(s) {
-            cout << "생성" << endl;
-        }
-        ~A() {
-            cout << "소멸" << endl;
-        }
-        void some() {
-            cout << "some" << endl;
-        }
-        void some_2() {
-            cout << "some_2" << endl;
-        }
-        void set_other(weak_ptr<A> o) {other = o;}
-        void acces_other() {
-            shared_ptr<A> o = other.lock();
-            if (o) {
-                cout << "name : "<< o -> name() << endl;
-            } else {
-                cout << "not other" << endl;
-            }
-        }
-        string name() {return s;}
+struct S {
+    int data;
+    S(int d) : data(d){
+        cout << "생성자" << endl;
+    }
+    S(const S& s) {
+        cout << "복사 생성자" << endl;
+        data = s.data;
+    }
+    S(S&& s) {
+        cout << "이동 생성자" << endl;
+        data = s.data;
+    }
+    
 };
 
+void som(S& s_1, S& s_2) {
+        s_1.data = s_2.data+3;
+    }
 
 int main() {
-    vector<shared_ptr<A>> v;
-    v.push_back(make_shared<A>("A"));
-    v.push_back(make_shared<A>("B"));
-    v[0] -> set_other(v[1]);
-    v[1] -> set_other(v[0]);
-    v[0] -> acces_other();
-    v.pop_back();
-    v[0] -> acces_other();
-
+    S s_1(2), s_2(3);
+    auto som_b = bind(som, ref(s_1), placeholders::_1);
+    som_b(s_2);
+    cout << s_1.data << endl;
     return 0;
 }
