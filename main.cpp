@@ -1,34 +1,78 @@
-// 14
+// 15-2
 #include <iostream>
 #include <string>
-#include <functional>
+#include <thread>
+#include <mutex>
+#include <vector>
+#include <queue>
+#include <chrono>
+#include <condition_variable>
 
 using namespace std;
 
-struct S {
-    int data;
-    S(int d) : data(d){
-        cout << "생성자" << endl;
-    }
-    S(const S& s) {
-        cout << "복사 생성자" << endl;
-        data = s.data;
-    }
-    S(S&& s) {
-        cout << "이동 생성자" << endl;
-        data = s.data;
-    }
-    
-};
+void producer(queue<string>* downloaded_pages, mutex* m, int index, condition_variable* cv) {
+    for (int i=0; i < 5; i++) {
+        this_thread::sleep_for(chrono::milliseconds(100*index));
+        string content = "웹사이트 : " + to_string(i) + "from thread (" + to_string(index) + ")";
 
-void som(S& s_1, S& s_2) {
-        s_1.data = s_2.data+3;
+        m->lock();
+        downloaded_pages->push(content);
+        m->unlock();
+
+        cv->notify_one();
     }
+}
+
+void consumer(queue<string>* downloaded_pages, mutex* m, int* num_processed, condition_variable* cv) {
+    while (*num_processed < 25) {
+        unique_lock<mutex> lock(*m);
+
+        cv->wait(
+            lock, [&] {return !downloaded_pages->empty() || *num_processed == 25;}
+        );
+
+        if (*num_processed == 25) {
+            lock.unlock();
+            return;
+        }
+
+        string content = downloaded_pages->front();
+        downloaded_pages->pop();
+        (*num_processed)++;
+
+       lock.unlock();
+
+        cout << content << endl;
+        this_thread::sleep_for(chrono::milliseconds(100));
+    }
+}
+
 
 int main() {
-    S s_1(2), s_2(3);
-    auto som_b = bind(som, ref(s_1), placeholders::_1);
-    som_b(s_2);
-    cout << s_1.data << endl;
+    queue<string> downloaded_pages;
+    mutex m;
+    int num_processed = 0;
+    vector<thread> threads_p;
+    vector<thread> threads_c;
+    condition_variable cv;
+
+    for (int i=0; i < 5; i++) {
+        threads_p.push_back(thread(producer, &downloaded_pages, &m, i, &cv));
+    }
+
+    for (int i=0; i < 3; i++) {
+        threads_c.push_back(thread(consumer, &downloaded_pages, &m, &num_processed, &cv));
+    }
+
+    for (int i=0; i < 5; i++) {
+        threads_p[i].join();
+    }
+
+    cv.notify_all();
+
+    for (int i=0; i < 3; i++) {
+        threads_c[i].join();
+    }
+
     return 0;
 }
