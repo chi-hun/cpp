@@ -1,78 +1,86 @@
 // 15-2
 #include <iostream>
 #include <string>
-#include <thread>
-#include <mutex>
 #include <vector>
 #include <queue>
-#include <chrono>
+#include <future>
+#include <functional>
 #include <condition_variable>
+#include <thread>
+#include <mutex>
+
+
 
 using namespace std;
 
-void producer(queue<string>* downloaded_pages, mutex* m, int index, condition_variable* cv) {
-    for (int i=0; i < 5; i++) {
-        this_thread::sleep_for(chrono::milliseconds(100*index));
-        string content = "웹사이트 : " + to_string(i) + "from thread (" + to_string(index) + ")";
+namespace ThreadPool {
+class ThreadPool {
+    private:
+        size_t num_threads_;
+        vector<thread> worker_threads_;
+        queue<function<void()>> jobs_;
+        condition_variable cv_job_q_;
+        mutex m_job_q_;
+        bool stop_all;
+        void Worker_Thread();
 
-        m->lock();
-        downloaded_pages->push(content);
-        m->unlock();
+    public:
+        ThreadPool(size_t num_threads);
+        ~ThreadPool();
+        void EnqueueJob(function<void()> job);
+};
 
-        cv->notify_one();
+ThreadPool::ThreadPool(size_t num_threads) : num_threads_(num_threads), stop_all(false) {
+    worker_threads_.reserve(num_threads);
+    for (size_t i=0; i < num_threads; ++i) {
+        worker_threads_.emplace_back([this]() {this->Worker_Thread();});
     }
 }
 
-void consumer(queue<string>* downloaded_pages, mutex* m, int* num_processed, condition_variable* cv) {
-    while (*num_processed < 25) {
-        unique_lock<mutex> lock(*m);
+ThreadPool::~ThreadPool() {
+    stop_all = true;
+    cv_job_q_.notify_all();
+    for (thread& t : worker_threads_) {
+        t.join();
+    }
+}
 
-        cv->wait(
-            lock, [&] {return !downloaded_pages->empty() || *num_processed == 25;}
-        );
-
-        if (*num_processed == 25) {
-            lock.unlock();
+void ThreadPool::Worker_Thread() {
+    while (true) {
+        unique_lock<mutex> lock(m_job_q_);
+        cv_job_q_.wait(lock, [this]() {return !jobs_.empty() || stop_all;});
+        if (stop_all && jobs_.empty()) {
             return;
         }
-
-        string content = downloaded_pages->front();
-        downloaded_pages->pop();
-        (*num_processed)++;
-
-       lock.unlock();
-
-        cout << content << endl;
-        this_thread::sleep_for(chrono::milliseconds(100));
+        function<void()> job = move(jobs_.front());
+        jobs_.pop();
+        lock.unlock();
+        job();
     }
 }
 
+void ThreadPool::EnqueueJob(function<void()> job) {
+    if (stop_all) {
+        throw runtime_error("ThreadPool 사용중지");
+    }
+    { lock_guard<mutex> lock(m_job_q_);
+        jobs_.push(move(job));
+    }
+    cv_job_q_.notify_one();
+}
+}
+
+void work(int t, int id) {
+    printf("%d start \n", id);
+  std::this_thread::sleep_for(std::chrono::seconds(t));
+  printf("%d end after %ds\n", id, t);
+}
 
 int main() {
-    queue<string> downloaded_pages;
-    mutex m;
-    int num_processed = 0;
-    vector<thread> threads_p;
-    vector<thread> threads_c;
-    condition_variable cv;
+    ThreadPool::ThreadPool pool(3);
 
-    for (int i=0; i < 5; i++) {
-        threads_p.push_back(thread(producer, &downloaded_pages, &m, i, &cv));
+    for (int i = 0; i < 10; i++) {
+        pool.EnqueueJob([i]() { work(i % 3 + 1, i); });
     }
-
-    for (int i=0; i < 3; i++) {
-        threads_c.push_back(thread(consumer, &downloaded_pages, &m, &num_processed, &cv));
-    }
-
-    for (int i=0; i < 5; i++) {
-        threads_p[i].join();
-    }
-
-    cv.notify_all();
-
-    for (int i=0; i < 3; i++) {
-        threads_c[i].join();
-    }
-
     return 0;
 }
